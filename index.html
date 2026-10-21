@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f4f7f5">
+    <meta name="description" content="Explore current weather around the world on an interactive map.">
+    <title>WeatherMap — Weather, where you are</title>
+    <link rel="icon" href="assets/weather-mark.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer crossorigin=""></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="./" aria-label="WeatherMap home">
+          <img class="brand__mark" src="assets/weather-mark.svg" alt="">
+          <span class="brand__name">weather<span>map</span></span>
+        </a>
+        <div class="topbar__meta">
+          <span class="live-indicator" aria-hidden="true"></span>
+          <span>Live conditions</span>
+          <span class="topbar__divider" aria-hidden="true"></span>
+          <span class="topbar__edition">A clearer view of here</span>
+        </div>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="page-title">
+          <div class="intro__copy">
+            <p class="eyebrow"><span class="eyebrow__line"></span> WEATHER, IN CONTEXT</p>
+            <h1 id="page-title">See the weather<br><span>where it happens.</span></h1>
+            <p class="intro__description">Find a place. Get the conditions. See it all on the map.</p>
+          </div>
+
+          <div class="search-panel">
+            <form id="searchForm" class="search-form" novalidate>
+              <label for="locationInput">Choose a place</label>
+              <div class="search-form__row">
+                <div class="input-wrap">
+                  <span class="input-wrap__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false"><path d="M20 10.2c0 5.2-8 11-8 11s-8-5.8-8-11a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>
+                  </span>
+                  <input id="locationInput" name="location" type="search" placeholder="Try ‘Port Sudan’ or 15.5, 32.56" autocomplete="off" aria-describedby="searchHint" required>
+                </div>
+                <button class="search-button" type="submit">
+                  <span>Get weather</span>
+                  <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h11M10 5l5 5-5 5"></path></svg>
+                </button>
+              </div>
+              <p id="searchHint" class="field-hint">Search by city or coordinates, e.g. 15.5, 32.56 (latitude, longitude).</p>
+            </form>
+
+            <details class="key-panel" id="apiKeyPanel">
+              <summary>
+                <span class="key-panel__summary-icon" aria-hidden="true">API</span>
+                <span>Add weather API key</span>
+                <span class="key-panel__tag" id="keyStatus">Required for weather</span>
+              </summary>
+              <div class="key-panel__body">
+                <label for="apiKeyInput">OpenWeatherMap API key</label>
+                <div class="key-field">
+                  <input id="apiKeyInput" type="password" autocomplete="off" spellcheck="false" placeholder="Paste your OpenWeatherMap key">
+                  <button id="toggleKeyVisibility" type="button" class="text-button" aria-label="Show API key">Show</button>
+                </div>
+                <div class="key-panel__actions">
+                  <button id="activateKeyButton" type="button" class="key-activate">Use API key</button>
+                  <button id="clearKeyButton" type="button" class="text-button text-button--muted">Clear</button>
+                </div>
+                <p class="key-panel__note">Paste your key above and select “Use API key”. It stays in this tab's memory only and is never saved to this project or browser storage.</p>
+                <p class="key-panel__status" id="keyMessage" aria-live="polite"></p>
+              </div>
+            </details>
+          </div>
+        </section>
+
+        <section class="favorites" aria-labelledby="favoritesTitle">
+          <div class="favorites__heading">
+            <div>
+              <p class="eyebrow eyebrow--small">YOUR SHORTLIST</p>
+              <h2 id="favoritesTitle">Pinned places</h2>
+            </div>
+            <button id="addFavoriteButton" class="save-place" type="button" disabled>
+              <span aria-hidden="true">＋</span> Save this place
+            </button>
+          </div>
+          <div id="favoritesList" class="favorites__list" aria-live="polite">
+            <p class="favorites__empty">Your saved places will appear here.</p>
+          </div>
+        </section>
+
+        <section class="map-section" aria-labelledby="mapTitle">
+          <div class="map-section__heading">
+            <div>
+              <p class="eyebrow eyebrow--small">EXPLORE THE WORLD</p>
+              <h2 id="mapTitle">Weather map</h2>
+            </div>
+            <div class="map-location" id="mapLocationBadge">
+              <span class="map-location__dot" aria-hidden="true"></span>
+              <span>Khartoum, Sudan</span>
+            </div>
+          </div>
+
+          <div class="status-stack">
+            <div id="loadingIndicator" class="loading-indicator" role="status" aria-live="polite" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="loadingLabel">Finding your place…</span>
+            </div>
+            <div id="statusMessage" class="notice" role="alert" hidden></div>
+          </div>
+
+          <div class="map-frame">
+            <div id="map" role="application" aria-label="Interactive weather map centered on Khartoum, Sudan">
+              <p class="map-fallback">Loading the interactive map…</p>
+            </div>
+            <div class="map-stamp" aria-hidden="true">
+              <span class="map-stamp__mark">W</span>
+              <span>WEATHERMAP<br><small>LIVE ATLAS</small></span>
+            </div>
+          </div>
+          <div class="map-caption">
+            <p>Choose a location to reveal its latest conditions.</p>
+            <p class="map-caption__credits">Map data © OpenStreetMap contributors · Weather by OpenWeatherMap</p>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <a class="brand brand--footer" href="./" aria-label="WeatherMap home">
+          <img class="brand__mark" src="assets/weather-mark.svg" alt="">
+          <span class="brand__name">weather<span>map</span></span>
+        </a>
+        <p>Made for the curious, wherever they are.</p>
+        <a class="footer__link" href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">Map data &amp; credits</a>
+      </footer>
+    </div>
+  </body>
+</html>
